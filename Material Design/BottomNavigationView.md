@@ -1,6 +1,6 @@
 #Material Design使用
-1. [ripple水波纹]()  
-2. [BottomNavigationView]()
+1. [ripple水波纹](https://github.com/coding0man/Android-/blob/master/Material%20Design/Ripple%E6%B0%B4%E6%B3%A2%E7%BA%B9.md)  
+2. [BottomNavigationView](https://github.com/coding0man/Android-/blob/master/Material%20Design/BottomNavigationView.md)
 
 
 ##2. BottomNavigationView 底部导航控件
