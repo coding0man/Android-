@@ -28,13 +28,13 @@
 >通常情况下，启动一个Activity的方式有两种，即显式启动和隐式启动。  
 >Android中，四大组件的启动都是通过intent来启动的。  
 >*显式启动*：在intent中显式指定Activity的名字，如startActivity(new Intent(mContext,MainActivity.class))  
->*隐式启动*： 在Intent中指定Activity的Action，指定了Action后由系统进行筛选，如果只有一个符合的就直接启动，有多个就全部展示出来，给用户选择。这种方式也正是intent强大的原因，启动一个外部Activity，比如选择照片，打电话，发短信，发邮件等等，我们不必记住没一个Activity的名字，我们只要知道他们所属的Action，然后交给系统去识别。即便有好几个邮件客户端，也一样不影响，交给用户选择他想使用的邮件客户端就可以了。如startActivity(new Intent("ActionName"))
+>*隐式启动*： 在Intent中指定Activity的Action，指定了Action后由系统进行筛选，如果只有一个符合的就直接启动，有多个就全部展示出来，给用户选择。这种方式也正是intent强大的原因，启动一个外部Activity，比如选择照片，打电话，发短信，发邮件等等，我们不必记住每一个Activity的名字，我们只要知道他们所属的Action，然后交给系统去识别。即便有好几个邮件客户端，也一样不影响，交给用户选择他想使用的邮件客户端就可以了。如startActivity(new Intent("ActionName"))
 >*关闭Activity*： 直接调用Activity.finish()方法。  
 
 ###4. 管理Activity的生命周期？
 [Activity生命周期](https://developer.android.com/images/activity_lifecycle.png?hl=zh-cn)  
 先看一张图：  
-![生命周期](sjdkjs)
+![生命周期](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/声明周期函数.png)
 >名为“是否能事后终止？”的列表示系统是否能在不执行另一行 Activity 代码的情况下，在方法返回后随时终止承载 Activity 的进程。 有三个方法带有“是”标记：(onPause()、onStop() 和 onDestroy())。由于 onPause() 是这三个方法中的第一个，因此 Activity 创建后，onPause() 必定成为最后调用的方法，然后才能终止进程 — 如果系统在紧急情况下必须恢复内存，则可能不会调用 onStop() 和 onDestroy()。因此，您应该使用 onPause() 向存储设备写入至关重要的持久性数据（例如用户编辑）。不过，您应该对 onPause() 调用期间必须保留的信息有所选择，因为该方法中的任何阻止过程都会妨碍向下一个 Activity 的转变并拖慢用户体验。
 
 >在是否能在事后终止？列中标记为“否”的方法可从系统调用它们的一刻起防止承载 Activity 的进程被终止。 因此，在从 onPause() 返回的时间到 onResume() 被调用的时间，系统可以终止 Activity。在 onPause() 被再次调用并返回前，将无法再次终止 Activity。
@@ -60,3 +60,29 @@
 
 >您只需旋转设备，让屏幕方向发生变化，就能有效地测试您的应用的状态恢复能力。 当屏幕方向变化时，系统会销毁并重建 Activity，以便应用可供新屏幕配置使用的备用资源。 单凭这一理由，您的 Activity 在重建时能否完全恢复其状态就显得非常重要，因为用户在使用应用时经常需要旋转屏幕。*（对于大多数应用，我们都是设置不可旋转屏幕的）*
 
+###6.Activity的启动模式和onNewIntent方法
+* Standard
+* SingleTop
+* SingleTask
+* SingleInstance
+
+####1. Standard 
+标准模式下，每次启动Activity都会新建一个Activity实例并往Activity栈中放入。如果所有的Activity均为标准模式可能存在这样的情况。
+A->B->A->C->B->A->A->A....
+####2.SingleTop
+在Activity栈的栈顶只会存在一个Activity实例，如果栈顶就是当前要创建Activity的实例，不创建当前实例，调用该Activity实例的onNewInstance方法；如果栈顶不是该对象的实例，则创建该对象的实例加入Activity栈的栈顶。
+因此会存在栈中存在多个某Activity的实例，但是不会连续出现两个。如：
+A->B->A->C->B->A->B->C->B->A->C....
+####3.SingleTask
+在Activity栈中只存在一个Activity的实例，如果栈中存在要创建的Activity的实例，则不会新创建Activity，并且会将该Activity上的其他Activity清除掉，同时会调用onNewIntent方法。如原来栈中元素为：A->B->C,如果A的启动模式为singleTask,则再次启动A后,B和C会被清除，栈中元素变成了A;复用上面的例子，如果要启动的是B并且B为SingleTask,再次启动B后栈中元素变成了AB.
+####4.SingleInstance
+会创建一个新的Activity栈，并且在新的Activity栈中加入该Activity实例，同时该栈中实例会被其他应用共享，这个没有实际用过。
+####5.onNewIntent方法
+在谷歌的原档中只提到了该方法会在启动模式设为SingleTop的时候调用，但是实际上似乎设为SingleTask时也同样会触发该方法。
+下面是谷歌文档中的原话：
+> void onNewIntent (Intent intent)
+This is called for activities that set launchMode to "singleTop" in their package, or if a client used the FLAG_ACTIVITY_SINGLE_TOP flag when calling startActivity(Intent). In either case, when the activity is re-launched while at the top of the activity stack instead of a new instance of the activity being started, onNewIntent() will be called on the existing instance with the Intent that was used to re-launch it.
+An activity will always be paused before receiving a new intent, so you can count on onResume() being called after this method.
+Note that getIntent() still returns the original Intent. You can use setIntent(Intent) to update it to this new Intent.
+
+谷歌爸爸是说在清单文件或者启动Activity时设置了SingleTop,在栈顶重新启动时会调用onNewIntent方法。然后呢，要注意的一点时是接收新的Intent之前Activity会先进入onPause状态，还有一点是这个时候需要手动调用setIntent方法，将参数中传递的Intent保存下来，否则下次调用getIntent方法的时候，拿到的还是第一次的那个Intent。嗯，就酱。
