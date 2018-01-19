@@ -20,7 +20,9 @@ Android系统在设计的初期就已经考虑到了UI的更新问题，由于An
 基于以上两个缺点，这种方式被抛弃。于是机智如我谷歌爸爸。。。设置一个线程专门处理UI控件的更新，如果其他线程也需要对UI进行更新，不好意思，您把您想做的告诉那个专门处理UI线程的家伙，让它帮你做。大家各有各的任务，井水不犯河水，各司其职，效率才会高，不仅仅对于软件如此，人也是如此，我只管写我的代码，有农民伯伯帮我种吃的、有电脑公司卖给我电脑、有建筑公司给我盖房子（当然了，房子我是万万买不起的... 哼！），这些事儿好像自己也能干，但是都自己干好像就回到了远古时代，人类的进步和发展和社会分工的明确也是离不开的，而且关系很大！
 好像扯的有点远了。
 
-那么您也看出来了，消息机制其实可以很简单的用一句话概括，就是：其他线程通过给特定线程发送消息，将某项专职的工作，交给这个特定的线程去做。比如说其他线程都把处理UI显示的工作通过发送消息交给UI线程去做。
+那么您也看出来了，消息机制其实可以很简单的用一句话概括，就是：其他线程通过给特定线程发送消息，将某项专职的工作，交给这个特定的线程去做。比如说其他线程都把处理UI显示的工作通过发送消息交给UI线程去做。  
+实现的原理呢，我是这么理解的，现在要做的主要工作就是切换线程去操作，怎么切换呢？把两条线程看作是两条并行的公路，如果要从一条公路转到另一条公路上，要怎么做呢？是不是只要找到两条公路交叉或者共用某个资源的地方，如果说交叉路口，比如说加油站。当然了，线程是不存在交叉的地方的，那么可以考虑他们公用资源的地方，不同的进程享用不同的内存空间，但是同一个进程的不同线程享用的是同一片内存空间，那让其他线程把要处理的消息放到这个特定的内存空间上，处理消息的线程来这个内存空间上来取消息去处理不就可以了吗。事实正是如此，在Android的消息机制中，扮演这个特定内存空间的对象就是MessageQueue对象，发送和处理的消息就是Message对象。其他的Handler和Looper都是为了配合线程切换用的。  
+其实不仅仅是线程之间，不同进程之间进行消息传递（IPC机制），也是这个思路，找到公用的一个资源点，文件系统啊，共享内存啊等等，这个以后再讲吧。
 
 这样理解起来是不是就是so easy了呢？
 
@@ -340,15 +342,37 @@ public class MyThread extends Thread {
 
 试着想一想，如果把线程A看成主线程，在回调方法更新UI，那这不就是Android系统中更新UI使用的套路吗？不错，事实本就如此，工具是工具，用它来更新UI是可以的，那你当然也可以用来做一些其他的工作啊。  
 
-在这里，通过以上的分析，不难得到下面的这个整个消息机制运行过程的时序图：
-![时序图]()
+在这里，通过以上的分析，不难得到下面的这个整个消息机制运行过程的时序图：  
+
+![时序图](https://github.com/coding0man/Android-/blob/master/attachment/MessageTimingDiagramUML.png?raw=true)
 
 
 ok啦，源码阅读到此为止。其他的细节，有兴趣的可以再细细研究一下。  
 下面我们来对涉及到的类进行一下总结。  
+先来说一下我的个人理解，
 
 ##Handler
+handler在消息机制中，扮演的是消息的发送方和处理方(通过回调函数)。消息在一个线程通过Handler发送到MessageQueue中。Looper获取到Message之后，根据Message中保存的handler对象调用handler对象的dispatch方法，进行消息的处理。
 
 ##Looper
+Looper在这里扮演的是一个轮询消息队列的角色，以为不停地去问MessageQueue要消息，得到消息之后，根据Message中保存的handler对象调用handler对象的dispatch方法，进行消息的处理。
 ##MessageQueue和Message
+MessageQueue实质上是一个单链表的结构，里面以链表的形式保存着Handler发送过来的消息，当有新消息发来时放在链表的尾部，Looper要取消息的时候从链表的头部取出消息返回给Looper处理。Message对象中保存在要处理的信息，同时也持有消息发送方（Handler）的引用，Looper在得到该Message的时候，可以从Message中拿到消息的发送方，调用发送方的回调方法将消息传递过去交给Handler进行处理。
 ##消息机制的应用
+在Android中有很多消息机制的应用，如：  
+
+* UI的更新
+* HandlerThread
+* IntentService
+
+###UI的更新
+UI线程持有一个Looper对象，Looper对象的loop方法在UI线程中一直不停的进行死循环，直到有新的消息发来的时候，交给特定的组件进行处理，当然了这个处理也是在主线程运行的（如我们设置的点击事件也是等着被UI线程调用的），正是由于这个原因，我们不能在主线程处理耗时操作。如果我们一个View的点击事件里做了大量耗时的操作，由于这个操作也在主线程中运行，主线程必须等着这个操作操作结束才能去处理其他的消息，这个时候表现的就是系统卡顿甚至报ANR的错误。
+
+###HandlerThread
+HandlerThread继承自Thread，内部保存一个Looper对象。
+这是一个系统帮我们包装好的Thread，这个线程的run方法已经调用了Looper.prepare和Looper.loop（即已经绑定了一个Looper对象，并且可以开始轮询消息），创建该对象之后可以通过获得对象获取到一个Looper对象，将Looper对象传递给Handler，完成Handler和Looper以及MessageQueue的绑定。最后再其他的线程中调用Handler的sendMessage或者post(Runable)方法发送消息，handler中的callback.handleMessage方法会在HandlerThread中运行。即，将消息发送到了特定的线程（此处是HandlerThread）处理。
+
+###IntentService
+IntentService继承自Service，运行时优先级更高，内部使用了HandlerThread作为处理消息的线程。内部有一个私有内部类ServiceHandler继承自Handler，并且会创建一个ServiceHandler对象。
+使用startService()方法启动IntentService时，不会重新创建一个服务，会调用ServiceHandler对象发送包含该Intent的Message对象，该对象通过HandlerThread处理后交给ServiceHandler重写的handleMessage方法进行处理，处理的方式是调用IntentService的onHandleIntent（Intent）方法，所以使用的方式就是创建一个继承自IntentService类的子类，并重写onHandleIntent方法，在该方法中处理startService时传递的Intent。Intent中包含有要交给Service处理的信息。
+
