@@ -1,0 +1,433 @@
+TCP/IP四层协议：
+
+
+
+名称  |概述
+---- |----
+应用层	|应用层为网络应用程序提供访问网络服务的接口。使用应用层协议，如HTTP，超文本传输协议，可以将超文本标记语言文档从一个应用程序传输到另外一个应用程序。
+传输层	|传输层为应用层实体提供端到端的通信功能，保证了数据包的顺序传送及数据的完整性。该层定义了两个主要的协议：传输控制协议（TCP）和用户数据报协议（UDP).
+网络层|	主要解决主机到主机的通信问题。它所包含的协议设计数据包在整个网络上的逻辑传输。注重重新赋予主机一个IP地址来完成对主机的寻址，它还负责数据包在多种网络中的路由。该层有三个主要协议：网际协议（IP）、互联网组管理协议（IGMP）和互联网控制报文协议（ICMP）。IP协议是网际互联层最重要的协议，它提供的是一个可靠、无连接的数据报传递服务。
+网络接入层|它负责监视数据在主机和网络之间的交换。事实上，TCP/IP本身并未定义该层的协议，而由参与互连的各网络使用自己的物理层和数据链路层协议，然后与TCP/IP的网络接入层进行连接。
+
+HTTP协议特点:
+
+无连接：HTTP本身是无连接的，即交换HTTP报文前不需要建立HTTP连接
+无状态：HTTP协议是无状态的，数据传输过程中，并不保存任何历史信息和状态信息。无状态特性简化了服务器的设计，使服务器更容易支持大量并发的HTPP请求。
+传输可靠性高：采用TCP作为运输层协议（面向连接、可靠传输），即交换报文时需要预先建立TCP连接
+HTTP报文格式：
+
+
+请求行：用于声明”请求报文“、主机域名、资源路径和协议版本
+请求头：说明客户端、服务器或报文的部分信息
+请求体：用于存放需要发送给服务器的数据信息
+HTTP报文字段：
+请求方法：GET、POST、HEAD、PUT、DELETE、OPTIONS、TRACE、CONNECT，常用的就是GET和POST了。
+URL：请求地址
+协议版本：使用的HTTP协议的版本，如HTTP/1.1
+头部字段：头部字段分成两部分，标准头字段和非标准头部字段（自定义的）。使用key-value的形式传递头部字段，常用的标准头部字段名称包括Accept，Accept-Charset,Accept-Encoding，Accept-Language，Authorization，Cache-Control，Content-Type，Content-Length，Cookie...实际使用的时候可以根据需要传递相应的值，除了这些标准头字段意外也可以根据实际需求添加额外的头字段，比如我在工作中就有一个项目加了一个叫做X-Kai-Client的头字段，传递的值是手机终端的类型，系统版本，屏幕分辨率，使用的客户端的版本等信息
+请求体：请求体常用的类型有下面几种：application/x-www-form-urlencoded，text/xml，application/json，multipart/form-data。这其中每一种都有固定的格式，下面先简单的说一下，具体的内容有需要再仔细查看吧，下次专门写一篇关于请求体文章。
+HTTP报文请求体的格式说明：
+application/x-www-form-urlencoded，这是浏览器默认的一种数据提交的方式，数据以key1=value1&key2=value2&key3=value3的形式组装，key和value都只支持ASCII码，非ASCII编码数据需要进行UrlEncode编码.比如retrofit 就使用要求用户@FormUrlEncoded注解来提醒框架对post的数据进行编码
+application/json,这种格式提交数据对于复杂格式的数据非常实用，直接将对象转换成json格式的数据传递就可以了。但是需要服务器支持，实用这种格式还是还跟后台老哥交流下看支不支持。
+text/xml,这种格式需要将要提交的数据转换成xml格式的进行上传，我是没咋用过。和其他几种也是大同小异吧。
+multipart/form-data，这种就厉害了，只要你做过文件上传肯定就见到过它，因为这家伙不是默认的提交数据的方式，需要自己对使用的网络框架进行配置。比如retrofit框架要求用户使用@multipart注解来提醒框架以这种形式提交数据。格式如下面所示吧
+Content-Type:multipart/form-data; boundary=----178782zheshiyigebondary3u2i3
+
+------178782zheshiyigebondary3u2i3
+Content-Disposition: form-data; name="title"
+
+This is title
+------178782zheshiyigebondary3u2i3
+Content-Disposition: form-data; name="file"; filename="test.png"
+Content-Type: image/png
+
+ ... content of test.png ...
+------178782zheshiyigebondary3u2i3--
+嗯，就是这样的！其他的细节 还是要自己去学去看吧
+
+传输层：
+传输层为应用提供端到端的服务，建立应用之间的连接，保证应用提交过来的数据的传输，将HTTP的报文进行分割和重新组装，链路的连接，并且可以告诉下面一层要把数据发到哪里去。我理解的就是这样，其他深层次的就不继续研究了。
+传输层常用的两个协议是TCP协议和UDP协议，关于两个协议的不同点可以简单地理解为TCP提供可靠的数据传输，可以对失败的数据进行重传，适用于需要保证数据需要可靠传递的情况比如传递一个文件，丢失文件的一段文件就变样了；UDP适用于允许数据包丢失，要求信息实时性的情况，比如视频会议，丢帧顶多会让视频卡一下，影响不大。
+
+TCP协议：应用层向TCP层发送用于网间传输的、用8位字节表示的数据流，然后TCP把数据流分区成适当长度的报文段（通常受该计算机连接的网络的数据链路层的最大传输单元（[1]  MTU）的限制）。之后TCP把结果包传给IP层，由它来通过网络将包传送给接收端实体[1]  的TCP层。TCP为了保证不发生丢包，就给每个包一个序号，同时序号也保证了传送到接收端实体的包的按序接收。然后接收端实体对已成功收到的包发回一个相应的确认（ACK）；如果发送端实体在合理的往返时延（RTT）内未收到确认，那么对应的数据包就被假设为已丢失将会被进行重传。TCP用一个校验和函数来检验数据是否有错误；在发送和接收时都要计算校验和。（来自维基百科）
+
+简单地说就是，TCP协议将应用层给的数据流分割成段，交给网络层去传输，另外一端接收到数据段（数据帧）之后也通过TCP协议把数据按顺序组装起来交给应用层。然后这其中通过一些手段确保数据对方确实收到了，并且数据是对的，其他的细节也不深入研究了。
+
+三次握手和四次挥手：
+
+三次握手：可以这么简单的理解这个，将A和B两台机器，①A想和B说话，A问一句我想和你说话，你听得到我说话吗？②B听到之后说我听得到你说话，你能听到我吗？③A听到之后回应一声说我能听到你说话。④A说，我昨晚做了一个梦，我涨工资啦！。。。试想一下，如果没有第③步可以吗，好像也行，但是考虑下面这种情况，①发生之后，因为网络阻塞的原因在一定时间内B没有收到所以就没有回应②也就没有发生，于是A又问了一次①再次发生，这次B收到了紧接着发生了②④，然后聊天之后断开连接，，，过了一会A发出的第一条被阻塞的①被B收到了，这时候直接连接B一直等着A说话，结果A就是不说话，B就一直等。。。这不就尴尬了吗，白白地浪费资源。事实上是跟某些字段seq,ack的关系，但是我就暂时这么理解了，深层次的就暂时不追究了，人的精力是有限的，要有所选择的学习，嗯 就这样。
+四次挥手：因为TCP是双向通信，A和B都可以给对方发送数据，所以断开链接的时候也需要两轮，A:我没有话要跟你说了，你还有事吗 B:好的，你要没啥事儿你就先闭嘴吧。B:继续说了点什么事情，也可能没说就想了一会。B:我也没啥事儿了，咱下次再聊  A:好的 。然后B就断开实际连接，过了一会儿A也断开了。。。。。
+可能会有的疑问：
+为啥要三次，两次不行吗。这个问题上面已经说了
+为啥A要等一会再断开？因为A不知道他最后说的“好的”B收到没有，如果B没有收到，B会再次说一遍“我也没啥事儿了，咱下次再聊”，而这时候A已经关闭连接了，不能回复了，B就只能一直重复最后一句话（TCP是可靠连接，每一次数据传输都需要对方确认）。
+A闭嘴之后咋还能回复“好的”？答案是A只是说我没事了，没有数据要发出去了，但是还是回应B的。
+
+网络层
+
+IP协议：IP是在TCP/IP协议族中网络层的主要协议，任务是仅仅根据源主机和目的主机的地址传送数据。为此目的，IP定义了寻址方法和数据报的封装结构。第一个架构的主要版本，现在称为IPv4，仍然是最主要的互联网协议，尽管世界各地正在积极部署IPv6。IP寻址可以通过IP找到目的主机的物理链路信息，然后将数据发送过去。再深入的话，东西就太多了。
+
+网络接入层
+将数据转换成bit流进行传递，是实际的物理线路，双绞线啊，光纤啊，电缆啊，接入层交换机啊什么的。
+
+以上就是TCP/IP的四层结构。
+
+
+下面说一下Android里面的应用，涉及到下面几块内容：
+HttpUrlConnection：没有构造方法，使用URL.openConnection()方法获取URLCnnection实例，使用强制类型转换成HttpURLConnection。需要再提一点的是返回的真实实例对象的类型由使用的协议决定，如果使用的http协议，返回的就是HttpUrlConnection；使用的Jar协议，返回的就是JarURLConnection；使用https协议，就返回HttpsUrlConnection实例。谷歌爸爸的原话是这样说的：
+     * If for the handler's protocol (such as HTTP or JAR), there
+     * exists a public, specialized URLConnection subclass belonging
+     * to one of the following packages or one of their subpackages:
+     * java.lang, java.io, java.util, java.net, the connection
+     * returned will be of that subclass. For example, for HTTP an
+     * HttpURLConnection will be returned, and for JAR a
+     * JarURLConnection will be returned.
+在URL.openConnection()方法中使用URLStreamHandler对象创建URLConnection对象，该对象的创建是在new URL(url)的时候系统自动创建的，下面是谷歌爸爸的原话，以及部分源代码
+* In most cases, an instance of a {@code URLStreamHandler}
+ * subclass is not created directly by an application. Rather, the
+ * first time a protocol name is encountered when constructing a
+ * {@code URL}, the appropriate stream protocol handler is
+ * automatically loaded.
+public URL(URL context, String spec, URLStreamHandler handler)
+        throws MalformedURLException{
+  
+        
+if (handler == null) {
+    handler = context.handler;
+}
+}
+获取到HttpUrlCOnnection实例之后就可以按照报文格式设置一些头字段以及传递一些参数什么的了。设置完成后可以调用connect()方法建立一个连接。值得注意的是 ①字段设置应该在connect()方法调用之前设置，②如果连接已经建立，就不重新建立连接了。
+Opens a communications link to the resource referenced by this URL, if such a connection has not already been established.
+
+If the connect method is called when the connection has already been opened (indicated by the connected field having the value true), the call is ignored.
+
+URLConnection objects go through two phases: first they are created, then they are connected. After being created, and before being connected, various options can be specified (e.g., doInput and UseCaches). After connecting, it is an error to try to set them. Operations that depend on being connected, like getContentLength, will implicitly perform the connection, if necessary.
+当然了，再深一点就是具体的实现了，据说4.4之后使用okhttp做请求，再下面就是使用socket进行通讯了，socket对tcp/ip协议进行封装，提供编程接口给上层调用，或者我们也可以越过HttpUrlConnection直接使用socket进行通讯也是可以的。稍后我尝试写几个示例代码。
+    /**
+     * http get请求的测试代码
+     * 
+     * @param url
+     */
+    public static void get(String url) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.connect();
+
+            InputStream inputStream = connection.getInputStream();
+            InputStreamReader reader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(reader);
+
+            StringBuilder sb = new StringBuilder();
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                sb.append(line);
+                line = bufferedReader.readLine();
+            }
+	    inputStream.close();			
+            Log.i("===response", sb.toString());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //在需要的时候调用这个方法
+    private void testHttpGet() {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String url = "https://shaishufang.com/api2/account/isnew?m=dexianfan@gmail.com&fmt=json";
+                HttpTest.get(url);
+            }
+        }).start();
+
+    }
+    
+    
+    //在logcat中打印出来的信息是01-12 13:10:28.000 20855-22616/com.nullponinter.study 	I/===response: {"code":10000,"request":"account\/isnew","sub_req":"","result":{"isnew":1},"status":1}
+Get请求不需要传递参数，如果有需要设置一个头字段就可以了，可以说是非常的简单了。没什么好说的。下面的话，再来一个Post的请求形式的，基本上也没什么难度。
+    /**
+     * 使用post请求，需要传递url和请求参数，设置RequestMethod，设置DoOutput=true
+     * 除此之外也可以添加一些适合自己应用的头字段信息
+     * 在使用上也没啥难度
+     * @param url
+     * @param params
+     */
+    public static void post(String url, String params) {
+        try {
+            HttpURLConnection httpUrlConnection = (HttpURLConnection) new URL(url).openConnection();
+            httpUrlConnection.setRequestMethod("POST");
+            httpUrlConnection.setDoOutput(true);
+            httpUrlConnection.addRequestProperty("X-Kai-Client", "shaishufang 8 3.7/20140121 (iPhone OS9.3.1) (iPhone) 320x568 -");
+            httpUrlConnection.addRequestProperty("Use-Agent", "android");
+            OutputStream outputStream = httpUrlConnection.getOutputStream();
+            outputStream.write(params.getBytes(Charset.forName("UTF-8")));
+
+            httpUrlConnection.connect();
+
+            InputStream inputStream = httpUrlConnection.getInputStream();
+            InputStreamReader reader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            StringBuilder sb = new StringBuilder();
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                sb.append(line);
+                line = bufferedReader.readLine();
+            }
+
+            Log.i("===response", sb.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //在合适的时候调用
+    private void testHttpPost() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String url = "https://shaishufang.com/api2/account/emails?fmt=json";
+                String params = "email=dexianfan@gmail.com";
+                HttpTest.post(url,params);
+            }
+        }).start();
+    }
+
+    /**
+     这是logcat的输出：
+    {
+        "code": 10000,
+            "request": "account/emails",
+            "sub_req": "",
+            "result": {
+        "code": 1,
+                "msg": "发送成功"
+    },
+        "status": 1
+    }
+     **/
+使用起来也是超级简单的说，不好玩不好玩，咱们来看看直接使用HttpUrlConnection上传文件试试火，看能点着不能，说了的，上传文件的话，需要设置Content-Type = "multipart/form-data",将数据分成一段一段的，就像这样
+    /**
+     * 使用httpUrlConnection 进行文件的上传
+     * @param url
+     * @param params
+     * @param fileKey
+     * @param uploadImage
+     */
+    public static void uploadFile(String url, Map<String, String> params, String fileKey, File uploadImage) {
+        String boundary = "123fandexianshigedashuaibi";
+//        --123fandexianshigedashuaibi
+//        Content-Disposition: form-data; name="name"
+//
+//        fandexian
+//        --123fandexianshigedashuaibi
+//        Content-Disposition: form-data; name="sex"
+//
+//        male
+//        --123fandexianshigedashuaibi
+//        Content-Disposition: form-data; name="avatarImage"; filename="beauty.jpg"
+//        Content-type:image/jpg
+//
+//        ......the image data....
+//        --123fandexianshigedashuaibi--
+
+        try {
+            HttpURLConnection httpUrlConnection = (HttpURLConnection) new URL(url).openConnection();
+            httpUrlConnection.setRequestMethod("POST");
+            httpUrlConnection.setDoOutput(true);
+            httpUrlConnection.addRequestProperty("Authorization","Basic NDc5MzMxOmUxMGFkYzM5NDliYTU5YWJiZTU2ZTA1N2YyMGY4ODNl");
+            httpUrlConnection.addRequestProperty("X-Kai-Client", "shaishufang 8 3.7/20140121 (iPhone OS9.3.1) (iPhone) 320x568 -");
+            httpUrlConnection.addRequestProperty("Use-Agent", "android");
+
+            httpUrlConnection.setRequestProperty("Content-Type","multipart/form-data; boundary="+boundary);
+
+            //下面先组装除了文件以外的参数
+            StringBuilder paramsBuilder = new StringBuilder();
+            for (String key : params.keySet()) {
+                paramsBuilder.append("--" + boundary).append("\r\n");
+                paramsBuilder.append("Content-Disposition: form-data; name=")
+                        .append("\"")
+                        .append(key)
+                        .append("\"").append("\r\n");
+                //要多加一个空行 看清楚喽
+                paramsBuilder.append("\r\n");
+                paramsBuilder.append(params.get(key)).append("\r\n");
+            }
+            //到此循环结束为止，其他的请求参数已经格式化完毕，可以把数据写入发送的报文了。
+            OutputStream outputStream = httpUrlConnection.getOutputStream();
+            outputStream.write(paramsBuilder.toString().getBytes(Charset.forName("UTF-8")));
+            //然后开始写文件参数了
+            //先写那个boundary的一串信息
+            StringBuilder fileInfoBuilder = new StringBuilder();
+            fileInfoBuilder.append("--").append(boundary).append("\r\n");
+            fileInfoBuilder.append("Content-Disposition: form-data; name=")
+                    .append("\"").append(fileKey).append("\"")
+                    .append("; filename=").append("\"").append(uploadImage.getName()).append("\"")
+                    .append("\r\n");
+            fileInfoBuilder.append("Content-Type: image/jpg").append("\r\n");
+            //要多加一个空行 看清楚喽
+            fileInfoBuilder.append("\r\n");
+
+            outputStream.write(fileInfoBuilder.toString().getBytes(Charset.forName("UTF-8")));
+            byte[] byteArray = new byte[1024];
+            FileInputStream fileInputStream = new FileInputStream(uploadImage);
+
+            int readLength = fileInputStream.read(byteArray);
+            while (readLength != -1) {
+                outputStream.write(byteArray, 0, readLength);
+                readLength = fileInputStream.read(byteArray);
+            }
+
+            //文件信息写完之后再写一个结束符号：
+            //记得先写一个换行
+            StringBuilder endInfo = new StringBuilder().append("\r\n");
+            endInfo.append("--").append(boundary).append("--").append("\r\n");
+            outputStream.write(endInfo.toString().getBytes(Charset.forName("UTF-8")));
+
+            httpUrlConnection.connect();
+
+            InputStream inputStream = httpUrlConnection.getInputStream();
+            InputStreamReader reader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            StringBuilder sb = new StringBuilder();
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                sb.append(line);
+                line = bufferedReader.readLine();
+            }
+
+            Log.i("===response", sb.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void testHttpUploadFile(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String url = "https://shaishufang.com/api2/book/addbookbyuser2?fmt=json";
+                File file = new File("/storage/emulated/0/tencent/MicroMsg/WeiXin/mmexport1514889238561.jpg");
+                Map<String,String> params = new HashMap<>();
+                params.put("book_name","测试书籍-我想我是真的爱你");
+                params.put("author","范德献");
+                params.put("press","晒书房出版本");
+                HttpTest.uploadFile(url,params,"img",file);
+            }
+        }).start();
+    }
+
+    /**返回数据
+     *{
+     "code": 10000,
+     "request": "book/addbookbyuser2",
+     "sub_req": "",
+     "result": {
+     "bid": "6677172",
+     "isbn": "",
+     "name": "测试书籍-我想我是真的爱你",
+     "shortcategory": "",
+     "categoryname": "其它分类",
+     "author": "范德献",
+     "publictime": "",
+     "press": "晒书房出版本",
+     "desc": "",
+     "img": "https://shaishufang.com/assets/books/s/53/43/FAkvQkIG.jpg",
+     "status": "1",
+     "hold": 1,
+     "sid": "FAkvQkIG",
+     "price": "0.00",
+     "price_unit": "0",
+     "price_unit_name": "元",
+     "size": "",
+     "bImg": "https://shaishufang.com/assets/books/l/53/43/FAkvQkIG.jpg"
+     },
+     "status": 1
+     }
+     */
+显而易见的是，写起来真的麻烦，尤其是那个换行，空行，比较容易出错，但是其实逻辑上倒是不复杂，写起来也很流畅，值得注意的点①记得修改这个setRequestProperty("Content-Type","multipart/form-data")，不设置默认使用application/x-www-form-urlencoded，服务器就无法正确处理我们传递的数据；②传文件的那一块也需要各位注意的是要加content-type,告诉服务器你传递的什么格式的文件，我测试的时候把image/jpg 改成text/jpg之后服务器返回的错误信息是“添加图书失败，文件类型不允许”。；③ 第三点就是那个数据组装的时候要小心一点，尤其是哪个换行，空行什么的。别的也就没啥了，还有一个问题是听说文件不能太大，这个我没有尝试过，没有发言权。
+
+Socket：正如上面说的，socket是对TCP/IP 协议的一个封装，对上提供方便的编码接口，对下调用其他的服务进行通讯。Socket提供一系列方便的接口给上层调用，如connect,bind,listen,accept,getinputStream,getOutputStream等。事实上我们可以直接不用HttpUrlConnection，直接使用Socket与服务器进行通讯也是可以的，下面先来个简单的get请求尝试一下。
+    /**
+     * 直接使用socket进行get请求
+     * @param urlString
+     * @return
+     */
+    public static String get(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            String host = url.getHost();
+            int port = url.getPort();
+            Socket socket = new Socket(host, 80);
+            //如果要是直接使用Socket进行通讯，就不能用那些个方便快捷的set方法了，
+            // 不管是请求行，请求头，还是请求体，啥啥都要自己写的
+            OutputStream outputStream = socket.getOutputStream();
+            OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+            //先写请求行，说明用的请求方法，请求地址，协议版本，
+            //记得加空格
+            //记得加空格
+            //记得加空格
+            //请求行写完之后再写一个换行，切记切记
+            writer.write("GET" + " " + urlString + " " + "HTTP/1.1" + "\r\n");
+            writer.write("Host:" + host + "\r\n");
+            //请求行写完就改写请求头了,根据自己的实际需求写吧
+            writer.write("Content-Type:application/x-www-form-urlencoded" + "\r\n");
+            writer.write("X-Kai-Client:shaishufang 3.7/20140121 (iPhone OS9.3.1) 320x568 -" + "\r\n");
+            writer.write("Use-Agent:android" + "\r\n");
+            writer.write("Accept: text/html,application/xhtml+xml,application/xml" + "\r\n");
+            writer.write("\r\n");
+            //上面我需要的请求头就写完了，你也可以根据自己的需要添加一些
+            //下面就该写请求体了，但是因为是GET请求，我好像不需要写请求体
+            //那就over啦
+
+            InputStream inputStream = socket.getInputStream();
+            InputStreamReader reader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            String headLine = bufferedReader.readLine();
+            while (headLine != null) {
+                if (headLine.equals("")) {
+                    break;
+                }
+                headLine = bufferedReader.readLine();
+            }
+            
+            StringBuilder sb = new StringBuilder();
+            String bodyLine = bufferedReader.readLine();
+            while (bodyLine != null) {
+                sb.append(bodyLine).append("\n");
+                bodyLine = bufferedReader.readLine();
+            }
+
+            String result = sb.toString().trim();
+            inputStream.close();
+            socket.close();
+            Log.e("===", sb.toString());
+            return result;
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private void testSocketGet() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String url = "https://httpbin.org/uuid";
+                SocketTest.get(url);
+            }
+        }).start();
+    }
+这是一个简单的Get请求，其实Post请求也差不多，就不贴示例代码了。
+
+这篇博客就暂时到此为止了，还有一些其他的细节和边角知识，下次有时间研究研究再写。
+
+
+
+
+
+
+
