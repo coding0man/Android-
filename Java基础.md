@@ -1,8 +1,8 @@
 #Java 常用常见知识点
 在实际工作中或者面试中总会遇到下面的Java基础：  
 
-- [ ] equals方法 
-- [ ] hashCode方法
+- [x] equals方法 
+- [x] hashCode方法
 - [ ] 接口和抽象类
 
 
