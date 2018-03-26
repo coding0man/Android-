@@ -1,0 +1,204 @@
+#Android 动画不详解（主要介绍了使用方法）
+
+Android 中的动画主要分为三类：补间动画，帧动画，和属性动画。  
+补间动画的效果比较少，也没有改变View的真实位置，只是改了视图显示的位置，位置移动之后点击事件仍发生在原来的位置。  
+帧动画类似于放电影，一帧一帧的播放就产生了动的效果。  
+属性动画是3.0之后加入的，3.0之前的设备无法使用属性动画，也可以使用网上的第三方库来兼容3.0以前的设备（第三方库内部做了转换，对3.0以前的设备仍使用补间动画，所以补间动画的缺点仍然存在）。
+
+##补间动画
+补间动画(View动画)包括四种动画：
+
+>
+- 平移动画 TranslateAnimation \<translate>
+- 缩放动画 ScaleAnimation \<scale>
+- 旋转动画 RotateAnimation \<rotate>
+- 透明度动画 AlphaAnimation \<alpha>
+
+
+平移、旋转、和缩放都会涉及初始结束位置或者动画的中心点参数的配置，配置有两种形式：
+>
+- 使用数字：代表移动的像素数；
+- 使用百分比：系统自己根据View的宽高进行换算
+
+参数或者方法说明
+>
+- fromXDelta、fromYDelta、toXDelta、toYDelta ： 动画起始位置相对于默认状态的距离。单位是像素或者百分比   
+- fromDegrees、toDegrees ： 旋转和结束位置相对于默认状态的转动角度  
+- pivotX、pivotY ： 旋转和缩放的中心点。单位是相对于左上角的像素数或者百分比   
+- fromXScale、toXScale、fromYScale、toYScale ：缩放的倍率，0.5是原图的一半大小
+- duration : 动画的持续时间。单位是毫秒数
+- fillAfter:动画结束之后，是否停留在结束位置。true/false
+- interpolator : 差值器。默认的有线性，加速，减速三种，可自定义（自定义差值器最后在聊吧）。
+- repeatMode : 重复的模式，有重新开始和反转两种模式。Animation.REVERSE和Animation.RESTART
+- animation.setRepeatCount(100) : 设置重复的次数**设置给AnmationSet没效果，要设置给Animation才有用**
+
+###以xml形式来定义和使用动画
+>
+```xml
+<!--设置一个动画集合-->
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="300"
+    android:fillAfter="true">
+    <translate
+        android:fromXDelta="-100%"
+        android:fromYDelta="0"
+        android:toXDelta="0%"
+        android:toYDelta="100" />
+    <rotate
+        android:fromDegrees="0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:toDegrees="360" />
+    <scale
+        android:fromXScale="0"
+        android:fromYScale="0"
+        android:pivotX="0"
+        android:pivotY="0"
+        android:toXScale="1"
+        android:toYScale="1" />
+    <alpha
+        android:fromAlpha="0.5"
+        android:toAlpha="1" />
+</set>
+<!--设置一个单独的动画-->
+<?xml version="1.0" encoding="utf-8"?>
+<rotate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="3000"
+    android:fillAfter="true"
+    android:fromDegrees="0"
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:toDegrees="360">
+</rotate>
+```
+>下面是在Java代码中使用
+>
+```java
+Animation animation = AnimationUtils.loadAnimation(MainActivity.this,R.anim.anim_translate);
+animation.setRepeatCount(3);
+imageView.startAnimation(animation);
+```
+
+###以Java代码定义和使用补间动画
+```java
+TranslateAnimation animation = new TranslateAnimation(
+           Animation.RELATIVE_TO_SELF,-1,
+           Animation.RELATIVE_TO_SELF,1,
+           Animation.ABSOLUTE,-100,
+           Animation.ABSOLUTE,100);
+animation.setDuration(1000);
+animation.setFillAfter(true);
+animation.setInterpolator(new AccelerateInterpolator());
+animation.setRepeatCount(-1);
+animation.setRepeatMode(Animation.REVERSE);
+imageView.startAnimation(animation);
+
+//这段代码定义了一个在X方向和Y方向上不停做加速运动和减速往复运动的动画
+//Animation.RELATIVE_TO_SELF就相当于xml中用百分数表示那种。感兴趣自己去看源码吧
+```
+
+
+##帧动画
+所有的动画方式本质都是一样的，隔一段时间改变一下视图的内容或者位置，连续的变动就会产生动画的效果。帧动画也一样，只是把视图的改变全部交给提前设计好的图片，由图片的切换产生动画效果。
+
+>使用：  
+>xml中定义一个animation list
+>
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@mipmap/animation1" android:duration="200"/>
+    <item android:drawable="@mipmap/animation2" android:duration="200"/>
+    <item android:drawable="@mipmap/animation3" android:duration="200"/>
+    <item android:drawable="@mipmap/animation4" android:duration="200"/>
+    <item android:drawable="@mipmap/animation5" android:duration="200"/>
+    <item android:drawable="@mipmap/animation6" android:duration="200"/>
+</animation-list>
+```
+>
+>在Activity中直接使用就可以了
+>
+```java
+imageView.setImageResource(R.drawable.anim_airplane);
+AnimationDrawable animationDrawable = (AnimationDrawable) imageView.getDrawable();
+animationDrawable.start();
+```
+
+##属性动画
+属性动画是Android API 11加入的动画形式，在补间动画中，只能进行平移、旋转、缩放、透明度的变化以及前面四种形式的组合而产生动画效果，效果是相对比较少的，一些复杂的动画效果实现起来就很很麻烦（如实现一个小球的曲线运动）。
+属性动画可以对一个对象的任意属性值进行动画操作，只要这个属性有set方法。  
+>
+涉及到的类：
+>
+- Animator:属性动画的基类，提供了启动、暂停、重启、终止、以及设置差值器、设置动画时间、添加动画监听器等一系列功能。
+- ValueAnimator：继承自Animator,对任意的值进行动画，为动画提供了一个时间引擎，通过时间引擎来判断当前动画的进度，属性当前的值，以及设置属性值给对象。
+- ObjectAnimator：继承自ValueAnimator,可以对target对象的某一个属性值mProperty进行动画操作，通过直接改变对象的属性值可以很简单的对一个视图进行动画。
+- AnimatorSet：继承自Animator，可以设置按顺序或者同时播放一组动画。
+
+###ValueAnimator的使用
+```java
+ValueAnimator valueAnimator = ValueAnimator.ofInt(0,100);
+valueAnimator.setDuration(1000);
+valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        @Override
+        public void onAnimationUpdate(ValueAnimator animation) {
+        	//当前值
+            int currentValue = (int) animation.getAnimatedValue();
+            //当前进度
+            float fraction = animation.getAnimatedFraction();
+
+            Log.e("==","currentValue:"+currentValue+"\nfraction:"+fraction);
+        }
+    });
+valueAnimator.start();
+```
+
+###ObjectAnimator的使用：
+
+```java
+ValueAnimator rotateAnim = ObjectAnimator.ofFloat(imageView,"rotation", 0, 360);
+rotateAnim.setRepeatCount(5);
+rotateAnim.setRepeatMode(ValueAnimator.REVERSE);
+
+ValueAnimator scaleXAnim = ObjectAnimator.ofFloat(imageView,"scaleX", 1f, 0.5f, 1f);
+scaleXAnim.setRepeatCount(5);
+scaleXAnim.setRepeatMode(ValueAnimator.REVERSE);
+
+ValueAnimator scaleYAnim = ObjectAnimator.ofFloat(imageView,"scaleY", 1f, 0.5f, 1f);
+scaleYAnim.setRepeatCount(5);
+scaleYAnim.setRepeatMode(ValueAnimator.REVERSE);
+
+ValueAnimator alphaAnim = ObjectAnimator.ofFloat(imageView,"alpha", 1f, 0.5f, 1f);
+alphaAnim.setRepeatCount(5);
+alphaAnim.setRepeatMode(ValueAnimator.REVERSE);
+
+AnimatorSet set = new AnimatorSet();
+set.playTogether(colorAnim, transYAnim, alphaAnim);
+set.setDuration(100);
+set.setInterpolator(new LinearInterpolator());
+set.start();
+```
+
+###自定义差值器和估值器
+
+```java
+ValueAnimator transYAnim = ObjectAnimator.ofFloat(imageView,
+                        "translationY", 0, 200);
+transYAnim.setRepeatCount(5);
+transYAnim.setRepeatMode(ValueAnimator.REVERSE);
+transYAnim.setInterpolator(new TimeInterpolator() {
+          @Override
+          public float getInterpolation(float input) {
+                 return input;
+           }
+          });
+
+transYAnim.setEvaluator(new TypeEvaluator<Float>() {
+//根据当前进度，使View在Y轴上实现正弦曲线运动
+              @Override
+              public Float evaluate(float fraction, Float startValue, Float endValue) {
+              return (float) Math.sin(fraction * 4 * Math.PI) * (endValue - startValue);
+              }
+             });
+```
