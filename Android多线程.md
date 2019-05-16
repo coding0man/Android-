@@ -9,41 +9,42 @@
 * 线程池概念和使用
 
 ##多线程概述
-众所周知，为了提供流畅的UI效果，Android系统不允许在主线程进行耗时操作，所以我们会经常使用多线程进行耗时操作，进行网络操作，数据的保存什么的。这是一个Android开发者一定会频繁接触到的知识模块，因此，为了更好的使用多线程，我们有必要把它弄清楚，弄明白。在我所阅读的很多很多书籍中，都将多线程的使用讲的非常明白，AsyncTask、HandlerThread、IntentService等等，讲的都很好，我就不在这方便多费口舌了。  
+众所周知，为了提供流畅的UI效果，Android系统不允许在主线程进行耗时操作，所以我们会经常使用多线程进行耗时操作，进行网络操作，数据的保存什么的。这是一个Android开发者一定会频繁接触到的知识模块，因此，为了更好的使用多线程，我们有必要把它弄清楚，弄明白。在我所阅读的很多很多书籍中，都将多线程的使用讲的非常明白，AsyncTask、HandlerThread、IntentService等等，讲的都很好，我就不在这方面多费口舌了。  
 理一理思路吧：
 
 * 为什么使用多线程？  
 
-> Android中一个应用默认对应一个进程，一个进程有一个默认的线程（主线程/main线程/UI线程），**为了处理耗时任务，我们创建新线程处理并且将处理结果告知主线程。**
+> Android中一个应用默认对应一个进程，一个进程有一个默认的线程（主线程/main线程/UI线程），**为了处理耗时任务，我们创建新的工作线程来处理任务，并且将处理结果告知或者不告知主线程。**
 
 * 如何创建线程？
 
 > 可以在任何一个线程中创建新的线程，新线程和创建线程的线程之间没有父子关系。Java中代表线程的类有且仅有Thread类，所以创建一个新线程的方法只有一种，就是创建一个Thread类的实例。
 > 
-> 我想肯定有人会问为什么你说只有一种，因为我觉得其他的都是变种。这些变种提供其他一些特定的功能、加入了一些其他的方法，都是为了方便开发者的使用。  
+> 我想肯定有人会问为什么你说只有一种，因为我觉得其他的都是变种。这些变种提供其他一些特定的功能、或者加入了一些其他的方法，都是为了方便开发者的使用。  
 > 
 > 所以我认为核心就是一种。
 > 
 > * 继承Thread类可以加入任何你想要增加的功能。
 > * 实现Runnable接口也只是为Thread提供了一个运行方法
-> * Callable接口只是为了拓宽Runnable,使线程增加可以返回数据的能力。
+> * Callable接口只是为了拓宽Runnable,使新线程增加可以返回数据的能力。
 > * AsyncTask类提供了线程池和handler机制，方便后台任务更新UI。  
 > * HandlerThread继承自Thread加入了Handler机制，其他线程将要处理的任务集中到HandlerThread中进行处理。  
 > * IntentService继承自Service类，加入HandlerThread机制，提供线程优先级，不容易被系统杀死。
 > 
-> 我要表达的是，**万变不离其宗，只有详细理解Thread，才能更好的掌握他们常说的那几种使用线程的方法**。使用嘛，看看文档就会，重要的是理解为啥，多问几个为啥。
+> 我要表达的是，**万变不离其宗，只有详细理解Thread，才能更好的掌握他们常说的那几种使用线程的方法**。使用嘛，看看文档就会，重要的是理解为什么是这样。
 
 ##Thread类和Runnable接口
+Thread类是Runnable接口的实现类，其中run()方法判断了当前Thread对象是否含有runable实例，如果有，调用该实例的run方法。
 这俩是创建多线程最最核心的内容，Runnable最简单，先说Runnable
 ###Runnable接口
 Runnable接口定义了一个run方法，其他什么都木有。
 > Runnable类只是提供了一个统一的规则/协议，给那些需要有代码需要运行的对象使用。  
- This interface is designed to provide a common protocol for objects that
+> This interface is designed to provide a common protocol for objects that
   wish to execute code while they are active. For example,
   <code>Runnable</code> is implemented by class <code>Thread</code>.
   
 ###Thread类
-Thread类是Java中线程类，用Thread类或者其子类可以创建一个线程对象。  
+Thread类是Java中线程类，使用Thread类或者其子类可以创建一个线程对象。  
 Thread类中一些重要的参数（可能还有其他的重要的）：  
 
 * **ThreadGroup group**：线程组，默认和创建该线程的线程在同一个线程组。
@@ -79,7 +80,7 @@ Thread类中一些重要的参数（可能还有其他的重要的）：
   
 ##线程相关（线程生命周期、线程控制、线程同步）
 ###线程生命周期
-Java虚拟机中线程的生命周期和操作系统中线程生命周期，没有映射关系，操作系统中线程状态的切换可以去看操作系统相关知识，这里贴一个图先看看：  
+Java虚拟机中线程的生命周期和操作系统中线程生命周期，没有映射关系，操作系统中线程状态的切换可以去看再熟悉一下操作系统相关知识，这里贴一个图先看看：  
 
 ![操作系统中线程状态](https://github.com/coding0man/Android-/blob/master/attachment/thread_state.png?raw=true)  
 
@@ -295,12 +296,71 @@ class RWDictionary {
 
 
 ##线程通信（Handler机制）
-Android中线程之间的通信主要就是消息机制(Handler机制)。可以查看我的另外一篇文章：  
-[Android消息机制详解](http://blog.csdn.net/code__man/article/details/79108191)
+Android中线程之间的通信主要就是消息机制(Handler机制)。  
+消息机制广泛应用在Android中的UI更新，但是其实他能做的可远远不止UI的更新，对于多任务的集中式处理也是消息机制的一大应用场景，同时对于AysncTask、HandlerThread、IntentService等等而言，内部也都使用了消息机制。  
+
+消息机制的基本原理是:  
+> 使用一个MessageQueue来作为连接两个线程的中介    
+> （线程资源放在栈内存区、MessageQueue放在堆内存中，同一进程的不同线程可以访问同一块堆内存），
+> 两个线程都可以对MessageQueue进行操作，从而实现线程的通信。  
+
+具体的实现逻辑是：
+
+> 1. 在线程A中创建Looper并且开始消息的循环，
+> 2. 利用A中创建好的Looper创建一个Handler（Handler的构造函数中默认使用当前线程的Looper）
+> 3. 新重建一个线程B，让线程B持有Handler的引用，
+> 4. 在线程B中处理任务，通过Handler发送消息对象Message将处理结果传递出去(通过handler.post(Runnable)或者handler.sendMessage(Message)等方法，发送的消息最终都会被包装成一个Message对象，如post(Runnable)方法会首先创建一个Message，然后将Runnable作为Message中的Runnable callback实例变量)
+> 5. Message最终会放入MessageQueue中，并且被线程A的Looper获取到
+> 6. Looper获取到Message之后，根据Message中保存的Handler的引用，调用Handler的dispatchMessage()方法，如果Message中包含callback,则执行callback的run()方法,否则调用handleMessage()方法处理消息。
+> 7. 流程结束之后调用looper.quit()关闭Looper。
+
+关于消息机制的详细内容，可以回头翻一下之前在郭霖公众号里我的一片投稿，也可以点击文章最后的查看原文通过链接访问：
+[Android消息机制](http://blog.csdn.net/code__man/article/details/79108191)的文章链接为：http://blog.csdn.net/code__man/article/details/79108191
+
+
+
 ##Android线程的创建和使用
 Android中线程的跟Java一样，使用Thread类代表线程。创建Thread类有以下几种方法：
 
 * **继承Thread类，重写run方法,创建子类实例**，调用Thread.start()方法。
+
+```java
+//step1:定义自己的Thread，也可以直接用局部类实现
+
+package com.nullponinter.study.ThreadsTest;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
+
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * Created by Francis on 15/01/2018.
+ */
+
+public class MyThread extends Thread {
+    private static final String TAG = "MyThread";
+
+    @Override
+    public void run() {
+        super.run();
+        //你可以在这里
+        //写这个需要处理的逻辑
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+    }
+}
+
+//Step2: 直接使用
+MyThread myThread = new MyThread();
+myThread.start();
+```
+
 * **在Thread类的构造方法中传入一个实现Runnable接口的类的实例**，作为Thread.target变量，在run方法中调用。
 
 	这里又可以分为两种情况：
@@ -308,9 +368,225 @@ Android中线程的跟Java一样，使用Thread类代表线程。创建Thread类
 	* 直接实现Runnable接口，重写run方法，传入构造方法
 	* 使用FutureTask作为Runnable对象（在FutureTask的构造方法中传入Callable对象），将FutureTask作为Thread.target变量。
 	* 你也可以根据自己的需要，去随便对Runnable做点什么
+	
+```java
+    /**
+     * 测试futureTask
+     */
+    public static void testThread() {
+    
+    
+    	//使用Runable
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+				//do something
+			
+            }
+        }).start();
+
+		//使用FutureTask
+        final FutureTask<Long> futureTask = new FutureTask(new Callable<Long>() {
+            @Override
+            public Long call() throws Exception {
+                Long sum = 0L;
+                for (int i = 0; i < 100000000; i++) {
+                    sum += i;
+                }
+                return sum;
+            }
+        });
+
+
+        new Thread(futureTask).start();
+        try {
+            Log.e("====sum=", "llllll");
+            Long sum = futureTask.get();
+            Log.e("====sum=", sum + "");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        
+    }
+```
+
 * **使用AsyncTask类**，在doInBackground方法中做耗时操作，调用更新进度方法，返回操作结果等、在onProgressUpdate方法中更新进度、在onPostExecute方法中操作返回结果，更新UI。
+
+```java
+    /**
+     * 测试asyncTask的方法
+     */
+    private void testAsyncTask() {
+
+        AsyncTask asyncTask = new AsyncTask<String,Integer,String>(){
+
+            @Override
+            protected String doInBackground(String... strings) {
+                return null;
+            }
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+            @Override
+            protected void onPostExecute(String s) {
+                super.onPostExecute(s);
+            }
+
+            @Override
+            protected void onProgressUpdate(Integer... values) {
+                super.onProgressUpdate(values);
+            }
+        };
+        
+        asyncTask.execute("");
+    }
+```
+
 * **使用HandlerThread**,将特定的任务集中到一个线程来做，其他线程将任务发送到HandlerThread。
+
+```java
+    /**
+     * 测试HandlerThread
+     */
+    private void testHandlerThread() {
+
+        //使用的Handler构造方法没有提供Looper，默认使用当前线程的Looper，
+        // 所以回调方法中的代码也在当前线程执行
+        final Handler currentThreadHandler = new Handler(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                StringBuilder sb = new StringBuilder("currentThreadHandler")
+                        .append("\nmessage what=").append(msg.what)
+                        .append("\nthreadName=").append(Thread.currentThread().getName());
+                Log.e("===", sb.toString());
+                return false;
+            }
+        });
+
+        HandlerThread handlerThread = new HandlerThread("MyTestThread");
+        handlerThread.start();
+        //使用的Handler构造方法提供了handlerThread的Looper，
+        // 所以回调方法中的代码在handlerThread中执行，
+        //该线程是工作线程，不能用于更新UI
+        final Handler handlerThreadHandler = new Handler(handlerThread.getLooper(), new Handler.Callback() {
+            @Override
+            public boolean handleMessage(Message msg) {
+                StringBuilder sb = new StringBuilder("handlerThreadHandler")
+                        .append("\nmessage what=").append(msg.what)
+                        .append("\nthreadName=").append(Thread.currentThread().getName());
+                Log.e("===", sb.toString());
+                return false;
+            }
+        });
+
+        final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int random = Math.abs(new Random().nextInt());
+                int sum = 0;
+                for (int i = 0; i < random; i++) {
+                    sum = sum + i;
+                }
+
+                if (sum % 2==0) {
+                    handlerThreadHandler.sendEmptyMessage(sum % 2);
+                }else {
+                    currentThreadHandler.sendEmptyMessage(sum % 2);
+                }
+            }
+        });
+
+        thread.start();
+        thread.start();
+        thread.start();
+        thread.start();
+        thread.start();
+    }
+    //输出的结果有两种情况
+    
+    //handlerThreadHandler
+    //message what=0
+    //threadName=MyTestThread
+    //或
+    //currentThreadHandler
+    //message what=1
+    //threadName=main
+```
+
 * **继承IntentService**，重写onHandleIntent方法处理Intent，其他线程直接startService(Intent)就可以了。
+
+```java
+
+//Step1 实现自己的IntentService类
+package com.nullponinter.study.ThreadsTest;
+
+import android.app.IntentService;
+import android.content.Intent;
+import android.support.annotation.Nullable;
+import android.util.Log;
+
+/**
+ * Created by Francis on 15/01/2018.
+ */
+
+public class MyIntentService extends IntentService {
+    public MyIntentService() {
+        super("MyIntentService");
+    }
+    /**
+     * Creates an IntentService.  Invoked by your subclass's constructor.
+     *
+     * @param name Used to name the worker thread, important only for debugging.
+     */
+    public MyIntentService(String name) {
+        super(name);
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.e("===","IntentService.onCreate() runs on "+Thread.currentThread().getName());
+
+        Log.e("===","IntentService被创建");
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.e("===","IntentService被销毁");
+
+    }
+
+    @Override
+    protected void onHandleIntent(@Nullable Intent intent) {
+
+        Log.e("===","intent service onHandleIntent run on "+Thread.currentThread().getName());
+        int randomCount = (int) Math.random()%100;
+
+        int sum = 0;
+        for (int i = 0; i < randomCount; i++) {
+            sum += i;
+        }
+        Log.e("===","sum==="+sum);
+
+    }
+}
+
+//Step2 使用IntentService
+private void testIntentService() {
+     for (int i = 0; i < 3; i++) {
+        Intent intent = new Intent(this, MyIntentService.class);
+        startService(intent);
+    }
+}
+
+```
 
 这几种方式各有各的好处，可以根据自己的需要选择不同的实现。具体的使用方法，网上的同类教程太多了，没有写的必要了。
 ##线程池概念和使用
@@ -349,19 +625,32 @@ Android中线程的跟Java一样，使用Thread类代表线程。创建Thread类
      *
      * @param corePoolSize the number of threads to keep in the pool, even
      *        if they are idle, unless {@code allowCoreThreadTimeOut} is set
+     *        池中核心线程的数量
      * @param maximumPoolSize the maximum number of threads to allow in the
      *        pool
+     *        最大线程数量
      * @param keepAliveTime when the number of threads is greater than
      *        the core, this is the maximum time that excess idle threads
      *        will wait for new tasks before terminating.
+     *        非核心线程的存活时间，
+     *        如果非核心线程在等待这么久之后还没有任务执行，就要死掉了
      * @param unit the time unit for the {@code keepAliveTime} argument
+     * 		 存活时间的单位
      * @param workQueue the queue to use for holding tasks before they are
      *        executed.  This queue will hold only the {@code Runnable}
      *        tasks submitted by the {@code execute} method.
+     *        任务的等待队列，定义了需要等待执行的线程应该放在哪里，
+     *        以及重新取出来执行的规则是什么
      * @param threadFactory the factory to use when the executor
      *        creates a new thread
+     *        创建新线程的线程工厂
      * @param handler the handler to use when execution is blocked
      *        because the thread bounds and queue capacities are reached
+     *        饱和策略
+     *        当新任务到达但是池中数量已达到最大值，
+     *        并且任务队列也已经满了的情况下，
+     *        任务拒绝的处理
+     *        默认的处理方式是直接抛出异常
      * @throws IllegalArgumentException if one of the following holds:<br>
      *         {@code corePoolSize < 0}<br>
      *         {@code keepAliveTime < 0}<br>
@@ -380,13 +669,105 @@ Android中线程的跟Java一样，使用Thread类代表线程。创建Thread类
 ```
 
 ###几种常用的线程池
-Executors一共提供了12种new开头的方法供使用，大致可以分成下面几类：
+Executors工厂类一共提供了很多种（大概12种）new开头的方法供使用，大致可以分成下面几类：
 
 * **newCachedThreadPool**:
+
+> 该池核心线程数为0，最大线程数没有上限，队列中不保存任务，线程的存活周期是60s  
+> 所以，该池适合于处理生存期很短的异步任务  
+> **SynchronousQueue:**一个不存储元素的阻塞队列。每个插入操作必须等到另一个线程调用移除操作，否则插入操作一直处于阻塞状态
+> 
+```java
+    /**
+     * Creates a thread pool that creates new threads as needed, but
+     * will reuse previously constructed threads when they are
+     * available.  These pools will typically improve the performance
+     * of programs that execute many short-lived asynchronous tasks.
+     * Calls to {@code execute} will reuse previously constructed
+     * threads if available. If no existing thread is available, a new
+     * thread will be created and added to the pool. Threads that have
+     * not been used for sixty seconds are terminated and removed from
+     * the cache. Thus, a pool that remains idle for long enough will
+     * not consume any resources. Note that pools with similar
+     * properties but different details (for example, timeout parameters)
+     * may be created using {@link ThreadPoolExecutor} constructors.
+     *
+     * @return the newly created thread pool
+     */
+    public static ExecutorService newCachedThreadPool() {
+        return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                      60L, TimeUnit.SECONDS,
+                                      new SynchronousQueue<Runnable>());
+    }
+```
+
 * **newFixedThreadPool**:
+
+> 核心线程数等于最大线程数，任务数超过线程数时放入阻塞队列中等待执行  
+> 合适于数量相对稳定，时间较长的任务    
+>
+```java
+     /**
+     * Creates a thread pool that reuses a fixed number of threads
+     * operating off a shared unbounded queue.  At any point, at most
+     * {@code nThreads} threads will be active processing tasks.
+     * If additional tasks are submitted when all threads are active,
+     * they will wait in the queue until a thread is available.
+     * If any thread terminates due to a failure during execution
+     * prior to shutdown, a new one will take its place if needed to
+     * execute subsequent tasks.  The threads in the pool will exist
+     * until it is explicitly {@link ExecutorService#shutdown shutdown}.
+     *
+     * @param nThreads the number of threads in the pool
+     * @return the newly created thread pool
+     * @throws IllegalArgumentException if {@code nThreads <= 0}
+     */
+    public static ExecutorService newFixedThreadPool(int nThreads) {
+        return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue<Runnable>());
+    }
+```
+
 * **newScheduledThreadPool**:
+
+>
+> 核心线程数自定义，最大线程数没有上限，10s的保活时间  
+> DelayedWorkQueue：
+>
+```java
+    /**
+     * Creates a thread pool that can schedule commands to run after a
+     * given delay, or to execute periodically.
+     * @param corePoolSize the number of threads to keep in the pool,
+     * even if they are idle
+     * @return a newly created scheduled thread pool
+     * @throws IllegalArgumentException if {@code corePoolSize < 0}
+     */
+    public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {
+        return new ScheduledThreadPoolExecutor(corePoolSize);
+    }
+    public ScheduledThreadPoolExecutor(int corePoolSize) {
+        super(corePoolSize, Integer.MAX_VALUE,
+              DEFAULT_KEEPALIVE_MILLIS, MILLISECONDS,
+              new DelayedWorkQueue());
+    }
+```
+
 * **newSingleThreadExecutor**:
-* **newWorkStealingPool**:
+
+> 单例线程，任意时间池中只能有一个线程
+>
+```java
+    public static ExecutorService newSingleThreadExecutor() {
+        return new FinalizableDelegatedExecutorService
+            (new ThreadPoolExecutor(1, 1,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue<Runnable>()));
+    }
+```
+
+
 
 
 
