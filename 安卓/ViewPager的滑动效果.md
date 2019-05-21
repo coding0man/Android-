@@ -1,7 +1,7 @@
 # 自定义 ViewPager 的切换效果
 本篇内容主要讲述和ViewPager切换效果相关的内容，ViewPager的基本使用，和Tablayout的联动等内容不做阐述，有需要的可以搜索其他相关内容。
 先看一个切换效果：  
-<iframe height=480 width=562 src="https://i.bmp.ovh/imgs/2019/05/55466b5c188849f4.giff">
+![](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/viewPager.gif)
 
 这个效果需要以下知识配合完成
 1. clipChild(chilpToPadding)
@@ -140,7 +140,7 @@ public class AlphaTransformer implements ViewPager.PageTransformer {
 final float transformPos = (float) (child.getLeft() - scrollX) / getClientWidth();
 ```
 先看初始状态：  
-// todo 这里补一张图
+![](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/ViewPagerState0.png)
 
 这里我们假设ViewPager的子View没有设置Padding值，即getClientWidth=View的宽度。  
 我们很容易得出如下的表格：  
@@ -151,6 +151,7 @@ final float transformPos = (float) (child.getLeft() - scrollX) / getClientWidth(
 |view2|0|100+10+100+10|100|2.2|
 
 现在我们假设现在滑动到了第二页：
+![](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/ViewPagerState1.png)
 此时ViewPager.scrollX不再是0而是100+10，我们可以再次计算一下：
 |View|ViewPager.scrollX|View.getLeft|getClientWidth|transformPos|
 |:-:|:-:|:-:|:-:|:-:|
@@ -191,7 +192,7 @@ public class AlphaTransformer implements ViewPager.PageTransformer {
 ```
 
 ## 一个稍显复杂的卡片折叠效果
-todo 加入图片
+![](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/viewPager.gif)
 如图展示的效果，选中的图片是正常显示的，两边的图片的尺寸比选中的图片小，他会盖在左侧的图片上并且右侧的图片上，左侧的图片不会完全滑出。  
 - 可以一次显示多张图片，只要ViewPager的父布局不限制ViewPager的显示区域即可
 - 右侧的图片显示在上方，可以通过设置elevation来实现
