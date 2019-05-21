@@ -1,7 +1,7 @@
 # 自定义 ViewPager 的切换效果
 本篇内容主要讲述和ViewPager切换效果相关的内容，ViewPager的基本使用，和Tablayout的联动等内容不做阐述，有需要的可以搜索其他相关内容。
 先看一个切换效果：  
-<!-- <iframe height=300 width=500 src="https://raw.githubusercontent.com/coding0man/Android-/master/attachment/viewPager.gif"> -->
+<iframe height=480 width=562 src="https://i.bmp.ovh/imgs/2019/05/55466b5c188849f4.giff">
 
 这个效果需要以下知识配合完成
 1. clipChild(chilpToPadding)
