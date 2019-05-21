@@ -1,12 +1,12 @@
 # 自定义 ViewPager 的切换效果
-本篇内容主要讲述和ViewPager切换效果相关的内容，ViewPager的基本使用，和Tablayout的联动等内容不做阐述，有需要的可以搜索其他相关内容。
-先看一个切换效果：  
+本篇内容主要讲述和ViewPager切换效果相关的内容，ViewPager的基本使用，和TabLayout的联动等内容不做阐述，有需要的可以搜索其他相关内容。  
+先看一个切换效果：    
 ![](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/viewPager.gif)
 
 这个效果需要以下知识配合完成
-1. clipChild(chilpToPadding)
-2. 布局层级，setElevation
-3. 还有最重要的ViewPager.PageTransformer
+1. clipChild(chilpToPadding)的使用
+2. 布局层级，setElevation（如何让ViewPager中的内容有层级）
+3. 还有最重要的ViewPager.PageTransformer的使用
 
 
 ## PageTransformer
@@ -34,21 +34,25 @@
         void transformPage(@NonNull View page, float position);
     }
 ```
-transformPage 方法有两个参数，一个是 View ，这个好理解就是当前要设置动效的页面。这个页面并不单单是指当前显示的页面，即将滑出的页面、即将滑入的页面、已经隐藏的页面，也就是说这个 View 是指所有的页面。那如何分辨 View 到底是指哪个页面呢，这个需要根据第二个参数 position 来辨别。 
+transformPage 方法有两个参数，一个是 View ，这个好理解就是当前要设置动效的页面。这个页面并不单单是指当前选中的页面，即将滑出的页面、即将滑入的页面、已经隐藏的页面，也就是说这个View指所有的页面。那如何分辨 View 到底是指哪个页面呢，这个需要根据第二个参数 position 来辨别。 
+
+### 非滑动状态下position和图片在ViewPager中的位置关系  
+千万不要把 position 理解成了 ViewPager 页面的下标，一定要看仔细，这个 position 可是 float 类型，下标怎么可能是浮点型呢！  
+
 - 不设置PageMargin 
-> 千万不要把 position 理解成了 ViewPager 页面的下标，一定要看仔细，这个 position 可是 float 类型，下标怎么可能是浮点型呢！
-从 doc 注释来看，当前选中的 item 的 position 永远是 0 ，被选中 item 的前一个为 -1，被选中 item 的后一个为 1。
+> 从 doc 注释来看，当前选中的 item 的 position 永远是 0 ，被选中 item 的前一个为 -1，被选中 item 的后一个为 1。在不设置PageMargin时确实如此
 
 - 设置PageMargin(ViewPager.setPageMargin)
 > 其实这里文档的描述是在ViewPager没有设置PageMargin时的值，
-如果你设置了 pageMargin，前后 item 的 position 需要分别加上（或减去，前减后加）一个偏移量（偏移量的计算方式为 pageMargin / pageWidth）。
+如果你设置了 pageMargin，前后 item 的 position 需要分别加上（或减去，前减后加）一个偏移量（偏移量的计算方式为 pageMargin / pageWidth）。也就是说选中的position=0，前一个是-1-pageMargin / pageWidth，后一个是1+pageMargin / pageWidth。
 
 - 对比  
 >
  >也就是说在不设置pageMargin的情况下，viewPager的step是1，各个子View非滑动状态下的排列是：...-3,-2,-1,0,1,2,3...
 >   
  >在加了pageMargin后，viewPager的step是（pageMargin+pageWindth）/pageWidth，我们假如该值是1.2。则此时各个子View非滑动状态下的排列是  
- ...-3.6,-2.4,-1.2,0,1.2,2.4,3.6...以此类推
+ ...-3.6,-2.4,-1.2,0,1.2,2.4,3.6...以此类推  
+
 ## 不设置PageMargin 的常规情况
 在用户滑动界面的时候，position 是动态变化的，下面以左滑为例（以向左为正方向）:
 
@@ -57,7 +61,9 @@ transformPage 方法有两个参数，一个是 View ，这个好理解就是当
 - 前两个 item 的 position：从 -2 渐至 -3，再往前就以此类推  
 - 后一个 item 的 position：从 1 渐至 0，再往后就以此类推  
 
-知道了当前View所在的position，根据position知道当前是第几个View，进而算出滑动完成的百分比progress，再根据progress给View一个透明度，一个旋转角度，一个缩放比例。那么当一次滑动时间的所有位置全部回调一遍时组合起来就有了动效。  
+知道了当前View所在的position，根据position知道当前是第几个View，进而算出滑动完成的百分比progress，再根据progress给View一个透明度，一个旋转角度，一个缩放比例等。那么当一次滑动的所有位置组合起来就有了动效。    
+  
+如：  
 下面这个Transformer就实现了越靠近0的位置的View越清晰，越远离越模糊的效果（设置alpha）
 ```java
 public class AlphaTransformer implements ViewPager.PageTransformer {
@@ -150,8 +156,8 @@ final float transformPos = (float) (child.getLeft() - scrollX) / getClientWidth(
 |view1|0|100+10|100|1.1|
 |view2|0|100+10+100+10|100|2.2|
 
-现在我们假设现在滑动到了第二页：
-![](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/ViewPagerState1.png)
+现在我们假设滑动到了第二页：  
+![](https://raw.githubusercontent.com/coding0man/Android-/master/attachment/ViewPagerState1.png)  
 此时ViewPager.scrollX不再是0而是100+10，我们可以再次计算一下：
 |View|ViewPager.scrollX|View.getLeft|getClientWidth|transformPos|
 |:-:|:-:|:-:|:-:|:-:|
@@ -161,7 +167,8 @@ final float transformPos = (float) (child.getLeft() - scrollX) / getClientWidth(
 
 由此可见当前选中的item的position永远是0。左右相邻的两个Item之间的position的差距始终是(pageWidth+pageMargin)/PageWidth,在本例中该值为1.1。
 
-知道了position的确切含义，我想接下来的问题一定难不住你。只需要提前计算好step = (pageWidth+pageMargin)/PageWidth的值，然后以step作为if条件的分割，然后用progress替代原来的position进行动效的设计就可以了。  
+知道了position的确切含义，我想接下来的问题一定难不住你。只需要提前计算好step = (pageWidth+pageMargin)/PageWidth的值，然后以step作为if条件的分割点，然后用progress替代原来的position进行动效的设计就可以了。
+    
 ### 一个简单的通用示例代码：  
 设置可以作为通用代码，因为它在是否设置PageMargin的情况下都适用。
 ```java
